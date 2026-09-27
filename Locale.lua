@@ -38,6 +38,13 @@ local EN = {
     SHOW_RESOURCE = "Show mana/resource bar",
     SHOW_BUFFS = "Show buffs",
     SHOW_DEBUFFS = "Show debuffs",
+    SHOW_THREAT = "Show threat bar",
+    THREAT_POSITION = "Threat bar position",
+    THREAT_ABOVE = "Above health bar",
+    THREAT_BELOW = "Below resource bar",
+    THREAT_TEXT = "Threat text",
+    THREAT_HEIGHT = "Threat bar height",
+    TEXT_VALUE = "Value",
     HEALTH_TEXT = "Health text",
     RESOURCE_TEXT = "Resource text",
     TEXT_POSITION = "Text position",
@@ -50,7 +57,7 @@ local EN = {
     WIDTH = "Health bar width",
     HEIGHT = "Health bar height",
     AURA_SIZE = "Buff/debuff icon size",
-    FOREVER_NOTE = "ComfyEnemyBar enhances the Blizzard enemy health bar instead of drawing a second health bar. Resource, buffs and debuffs can be enabled independently.",
+    FOREVER_NOTE = "Health bars use reaction colors: hostile red, neutral yellow, friendly green. Threat, resources, buffs and debuffs can be configured independently.",
 }
 
 local DE = {
@@ -89,6 +96,13 @@ local DE = {
     SHOW_RESOURCE = "Mana-/Ressourcenleiste anzeigen",
     SHOW_BUFFS = "Buffs anzeigen",
     SHOW_DEBUFFS = "Debuffs anzeigen",
+    SHOW_THREAT = "Bedrohungsleiste anzeigen",
+    THREAT_POSITION = "Position der Bedrohungsleiste",
+    THREAT_ABOVE = "Über der Lebensleiste",
+    THREAT_BELOW = "Unter der Ressourcenleiste",
+    THREAT_TEXT = "Bedrohungstext",
+    THREAT_HEIGHT = "Höhe der Bedrohungsleiste",
+    TEXT_VALUE = "Wert",
     HEALTH_TEXT = "Lebenspunkte-Text",
     RESOURCE_TEXT = "Ressourcen-Text",
     TEXT_POSITION = "Textposition",
@@ -101,7 +115,7 @@ local DE = {
     WIDTH = "Breite der Lebensleiste",
     HEIGHT = "Höhe der Lebensleiste",
     AURA_SIZE = "Größe Buff-/Debuff-Icons",
-    FOREVER_NOTE = "ComfyEnemyBar erweitert die Blizzard-Gegnerlebensleiste, statt eine zweite Lebensleiste zu zeichnen. Ressourcen, Buffs und Debuffs lassen sich getrennt ein- und ausschalten.",
+    FOREVER_NOTE = "Lebensleisten nutzen Reaktionsfarben: feindlich rot, neutral gelb, freundlich grün. Bedrohung, Ressourcen, Buffs und Debuffs lassen sich getrennt konfigurieren.",
 }
 
 local STRINGS = de and DE or EN
