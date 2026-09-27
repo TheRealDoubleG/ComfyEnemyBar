@@ -1,5 +1,13 @@
 # ComfyEnemyBar Changelog
 
+## 0.3 Beta – 27.09.2026
+- Added reaction-based health colors: hostile red, neutral yellow, friendly green.
+- Expanded handling to friendly and neutral nameplates.
+- Added native threat bar with percent/raw-value/both text modes.
+- Added above-health and below-resource threat positions.
+- Added threat-state coloring and threat update events.
+
+
 ## 0.2 Beta – 27.09.2026
 - Removed the duplicate-health-bar presentation: ComfyEnemyBar now enhances the Blizzard enemy health bar.
 - Added optional mana/resource bar.
