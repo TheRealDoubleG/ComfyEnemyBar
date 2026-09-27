@@ -1,0 +1,17 @@
+## Interface: 16001
+## Title: ComfyEnemyBar
+## Notes: Lightweight enemy nameplate information bars for WoW Forever.
+## Notes-deDE: Leichte Gegner-Namensleisten mit kompakten Zusatzinformationen für WoW Forever.
+## Author: TheRealDoubleG
+## Version: 0.1
+## SavedVariables: ComfyEnemyBarDB
+## X-Website: https://github.com/TheRealDoubleG/ComfyEnemyBar
+## X-ComfySuite: true
+## X-ComfyUI: 2
+## IconTexture: Interface\\Icons\\Ability_Hunter_SniperShot
+
+Locale.lua
+Core.lua
+SharedSettings.lua
+EnemyBars.lua
+Options.lua
