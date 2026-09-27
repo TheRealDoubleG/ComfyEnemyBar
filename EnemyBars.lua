@@ -46,7 +46,7 @@ local function FindBlizzardHealthBar(plate)
         unitFrame.HealthBarContainer and unitFrame.HealthBarContainer.HealthBar,
     }
 
-    for _, candidate in ipairs(candidates) do
+    for _, candidate in pairs(candidates) do
         if candidate and SafeObjectType(candidate) == "StatusBar" then
             return candidate
         end
@@ -100,7 +100,7 @@ local function SetDefaultAuraVisibility(plate, hidden)
         unitFrame.debuffFrame,
     }
 
-    for _, frame in ipairs(candidates) do
+    for _, frame in pairs(candidates) do
         if frame and not seen[frame] then
             seen[frame] = true
             if hidden then RememberAndSetAlpha(frame, 0) else RestoreAlpha(frame) end
@@ -493,9 +493,20 @@ function A:InitializeFeature()
         if event == "NAME_PLATE_UNIT_ADDED" then
             A:UpdateOverlay(unit)
         elseif event == "NAME_PLATE_UNIT_REMOVED" then
-            local plate = PlateFor(unit)
-            local overlay = plate and plate.__ComfyEnemyBarOverlay
-            if plate then A:RestorePlate(plate, overlay) end
+            local restored = false
+            for plate, overlay in pairs(A.plates) do
+                if overlay and overlay.unit == unit then
+                    A:RestorePlate(plate, overlay)
+                    overlay.unit = nil
+                    restored = true
+                    break
+                end
+            end
+            if not restored then
+                local plate = PlateFor(unit)
+                local overlay = plate and plate.__ComfyEnemyBarOverlay
+                if plate then A:RestorePlate(plate, overlay) end
+            end
         elseif event == "PLAYER_TARGET_CHANGED" then
             A:RefreshFeature()
         elseif unit then
