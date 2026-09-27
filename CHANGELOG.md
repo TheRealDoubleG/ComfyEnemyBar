@@ -1,5 +1,9 @@
 # ComfyEnemyBar Changelog
 
+## 0.4 Beta – 28.09.2026
+- Registered ComfyEnemyBar in Blizzard's native AddOns settings list with a button to open the full Comfy settings window.
+
+
 ## 0.3 Beta – 27.09.2026
 - Added reaction-based health colors: hostile red, neutral yellow, friendly green.
 - Expanded handling to friendly and neutral nameplates.
