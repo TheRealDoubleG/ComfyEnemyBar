@@ -1,5 +1,16 @@
 # ComfyEnemyBar Changelog
 
+## 0.2 Beta – 27.09.2026
+- Removed the duplicate-health-bar presentation: ComfyEnemyBar now enhances the Blizzard enemy health bar.
+- Added optional mana/resource bar.
+- Added independent buff and debuff toggles with compact aura rows close to the bars.
+- Added health text modes: off, percent, current, current + percent.
+- Added resource text modes: off, percent, current, current + percent.
+- Added centered or left-of-bar text placement for health and resources.
+- Added configurable aura icon size.
+- Added restoration/safety handling for recycled nameplates and protected values.
+
+
 ## 0.1 Beta – 27.09.2026
 - Initial WoW: Forever 1.60.1 foundation.
 - Added lightweight enemy nameplate overlays.
