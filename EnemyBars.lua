@@ -251,11 +251,11 @@ function A:GetOverlay(unit)
     end
 
     o = CreateFrame("StatusBar", nil, plate, "BackdropTemplate")
-    o:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    o:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+    if o:GetStatusBarTexture() then o:GetStatusBarTexture():SetAlpha(0) end
     o:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1})
-    o:SetBackdropColor(0.02, 0.02, 0.02, 0.78)
-    o:SetBackdropBorderColor(0, 0, 0, 0.9)
-    o:SetStatusBarColor(0.72, 0.08, 0.08, 0.95)
+    o:SetBackdropColor(0, 0, 0, 0)
+    o:SetBackdropBorderColor(0, 0, 0, 0)
 
     o.hp = o:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     o.level = o:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -366,15 +366,21 @@ function A:UpdateOverlay(unit)
         RestoreAlpha(o.blizzardHealthBar)
     end
     o.blizzardHealthBar = blizzardHealthBar
-    RememberAndSetAlpha(blizzardHealthBar, 0)
+    RestoreAlpha(blizzardHealthBar)
 
     -- Blizzard's aura frame is hidden while ComfyEnemyBar is active so there is
     -- only one configurable buff/debuff presentation.
     SetDefaultAuraVisibility(plate, true)
 
+    local barWidth = tonumber(c.width) or 130
+    local barHeight = tonumber(c.height) or 10
+    if type(blizzardHealthBar.SetSize) == "function" then
+        pcall(blizzardHealthBar.SetSize, blizzardHealthBar, barWidth, barHeight)
+    end
+
     o:ClearAllPoints()
     o:SetPoint("CENTER", blizzardHealthBar, "CENTER", 0, 0)
-    o:SetSize(tonumber(c.width) or 130, tonumber(c.height) or 10)
+    o:SetSize(barWidth, barHeight)
 
     local hp, maxhp = UnitHealth(unit), UnitHealthMax(unit)
     if IsSecret(hp) or IsSecret(maxhp) then
@@ -411,10 +417,8 @@ function A:UpdateOverlay(unit)
     end
     if target then
         o:SetBackdropBorderColor(1, 0.82, 0, 1)
-        o:SetStatusBarColor(1, 0.18, 0.08, 1)
     else
-        o:SetBackdropBorderColor(0, 0, 0, 0.9)
-        o:SetStatusBarColor(0.72, 0.08, 0.08, 0.95)
+        o:SetBackdropBorderColor(0, 0, 0, 0)
     end
     o:Show()
 
