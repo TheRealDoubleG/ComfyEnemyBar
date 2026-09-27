@@ -5,6 +5,10 @@ A.plates = A.plates or setmetatable({}, {__mode = "k"})
 local MAX_AURAS = 5
 local AURA_GAP = 2
 
+local REACTION_RED = {0.90, 0.08, 0.08}
+local REACTION_YELLOW = {1.00, 0.78, 0.00}
+local REACTION_GREEN = {0.12, 0.78, 0.18}
+
 local function IsSecret(value)
     if type(issecretvalue) == "function" then
         local ok, secret = pcall(issecretvalue, value)
@@ -146,6 +150,42 @@ local function PositionValueText(fontString, bar, position)
     end
 end
 
+local function ReactionColor(unit)
+    if type(UnitReaction) == "function" then
+        local ok, reaction = pcall(UnitReaction, unit, "player")
+        reaction = ok and tonumber(reaction) or nil
+        if reaction then
+            if reaction <= 3 then return REACTION_RED[1], REACTION_RED[2], REACTION_RED[3] end
+            if reaction == 4 then return REACTION_YELLOW[1], REACTION_YELLOW[2], REACTION_YELLOW[3] end
+            return REACTION_GREEN[1], REACTION_GREEN[2], REACTION_GREEN[3]
+        end
+    end
+    return REACTION_YELLOW[1], REACTION_YELLOW[2], REACTION_YELLOW[3]
+end
+
+local function ThreatText(percent, rawThreat, mode)
+    mode = mode or "percent"
+    if mode == "none" then return "" end
+    if mode == "value" then return CompactNumber(rawThreat) end
+    if mode == "both" then
+        return string.format("%d%% | %s", math.floor((tonumber(percent) or 0) + 0.5), CompactNumber(rawThreat))
+    end
+    return string.format("%d%%", math.floor((tonumber(percent) or 0) + 0.5))
+end
+
+local function GetThreatData(unit)
+    if type(UnitDetailedThreatSituation) ~= "function" then return nil end
+    local ok, _, status, scaledPercent, rawPercent, rawThreat = pcall(UnitDetailedThreatSituation, "player", unit)
+    if not ok then return nil end
+    if IsSecret(status) or IsSecret(scaledPercent) or IsSecret(rawPercent) or IsSecret(rawThreat) then return nil end
+    scaledPercent = tonumber(scaledPercent)
+    rawPercent = tonumber(rawPercent)
+    rawThreat = tonumber(rawThreat)
+    status = tonumber(status)
+    if scaledPercent == nil and rawPercent == nil and rawThreat == nil then return nil end
+    return status or 0, scaledPercent or rawPercent or 0, rawThreat or 0
+end
+
 local function PowerColor(unit)
     local powerType, token
     if type(UnitPowerType) == "function" then
@@ -268,6 +308,14 @@ function A:GetOverlay(unit)
     o.resource:SetBackdropBorderColor(0, 0, 0, 0.9)
     o.resourceText = o.resource:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 
+    o.threat = CreateFrame("StatusBar", nil, plate, "BackdropTemplate")
+    o.threat:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    o.threat:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1})
+    o.threat:SetBackdropColor(0.02, 0.02, 0.02, 0.78)
+    o.threat:SetBackdropBorderColor(0, 0, 0, 0.9)
+    o.threatText = o.threat:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    o.threatText:SetPoint("CENTER")
+
     o.debuffRow = CreateFrame("Frame", nil, plate)
     o.buffRow = CreateFrame("Frame", nil, plate)
     o.debuffIcons, o.buffIcons = {}, {}
@@ -286,6 +334,7 @@ function A:RestorePlate(plate, overlay)
     if overlay then
         overlay:Hide()
         overlay.resource:Hide()
+        overlay.threat:Hide()
         overlay.debuffRow:Hide()
         overlay.buffRow:Hide()
         HideAuraPool(overlay.debuffIcons)
@@ -344,13 +393,7 @@ function A:UpdateOverlay(unit)
     local o = self:GetOverlay(unit)
     if not plate or not o then return end
 
-    local enemy = true
-    if type(UnitCanAttack) == "function" then
-        local ok, value = pcall(UnitCanAttack, "player", unit)
-        if ok and not IsSecret(value) then enemy = value and true or false end
-    end
-
-    if not self.db.enabled or not enemy then
+    if not self.db.enabled then
         self:RestorePlate(plate, o)
         return
     end
@@ -376,6 +419,10 @@ function A:UpdateOverlay(unit)
     local barHeight = tonumber(c.height) or 10
     if type(blizzardHealthBar.SetSize) == "function" then
         pcall(blizzardHealthBar.SetSize, blizzardHealthBar, barWidth, barHeight)
+    end
+    if type(blizzardHealthBar.SetStatusBarColor) == "function" then
+        local rr, rg, rb = ReactionColor(unit)
+        pcall(blizzardHealthBar.SetStatusBarColor, blizzardHealthBar, rr, rg, rb, 1)
     end
 
     o:ClearAllPoints()
@@ -423,6 +470,31 @@ function A:UpdateOverlay(unit)
     o:Show()
 
     local auraAnchor = o
+    local threatBelowAnchor = o
+
+    if c.showThreat and c.threatPosition == "above" then
+        local status, threatPercent, rawThreat = GetThreatData(unit)
+        if threatPercent ~= nil then
+            o.threat:ClearAllPoints()
+            o.threat:SetPoint("BOTTOM", o, "TOP", 0, 2)
+            o.threat:SetSize(barWidth, tonumber(c.threatHeight) or 5)
+            o.threat:SetMinMaxValues(0, 100)
+            o.threat:SetValue(math.max(0, math.min(100, threatPercent)))
+            local tr, tg, tb = 1, 0.78, 0
+            if type(GetThreatStatusColor) == "function" then
+                local ok, r, g, b = pcall(GetThreatStatusColor, status or 0)
+                if ok then tr, tg, tb = r or tr, g or tg, b or tb end
+            end
+            o.threat:SetStatusBarColor(tr, tg, tb, 0.95)
+            o.threatText:SetText(ThreatText(threatPercent, rawThreat, c.threatTextMode))
+            o.threat:Show()
+        else
+            o.threat:Hide()
+        end
+    else
+        o.threat:Hide()
+    end
+
     if c.showResource then
         local power, maxPower = UnitPower(unit), UnitPowerMax(unit)
         local showResource = true
@@ -455,11 +527,36 @@ function A:UpdateOverlay(unit)
             PositionValueText(o.resourceText, o.resource, c.resourceTextPosition)
             o.resource:Show()
             auraAnchor = o.resource
+            threatBelowAnchor = o.resource
         else
             o.resource:Hide()
         end
     else
         o.resource:Hide()
+    end
+
+    if c.showThreat and c.threatPosition == "below" then
+        local status, threatPercent, rawThreat = GetThreatData(unit)
+        if threatPercent ~= nil then
+            o.threat:ClearAllPoints()
+            o.threat:SetPoint("TOP", threatBelowAnchor, "BOTTOM", 0, -2)
+            o.threat:SetSize(barWidth, tonumber(c.threatHeight) or 5)
+            o.threat:SetMinMaxValues(0, 100)
+            o.threat:SetValue(math.max(0, math.min(100, threatPercent)))
+            local tr, tg, tb = 1, 0.78, 0
+            if type(GetThreatStatusColor) == "function" then
+                local ok, r, g, b = pcall(GetThreatStatusColor, status or 0)
+                if ok then tr, tg, tb = r or tr, g or tg, b or tb end
+            end
+            o.threat:SetStatusBarColor(tr, tg, tb, 0.95)
+            o.threatText:SetText(ThreatText(threatPercent, rawThreat, c.threatTextMode))
+            o.threat:Show()
+            auraAnchor = o.threat
+        else
+            o.threat:Hide()
+        end
+    elseif c.threatPosition ~= "above" then
+        o.threat:Hide()
     end
 
     auraAnchor = self:UpdateAuraRow(o, unit, "HARMFUL", c.showDebuffs, true, auraAnchor, 1)
@@ -490,6 +587,9 @@ function A:InitializeFeature()
         "UNIT_MAXPOWER",
         "UNIT_DISPLAYPOWER",
         "UNIT_AURA",
+        "UNIT_FACTION",
+        "UNIT_THREAT_LIST_UPDATE",
+        "UNIT_THREAT_SITUATION_UPDATE",
     }
     for _, event in ipairs(events) do pcall(f.RegisterEvent, f, event) end
 
@@ -523,27 +623,54 @@ function A:BuildGeneralOptions(page, ui)
     ui.CreateCheck(page, self:T("SHOW_LEVEL"), 20, -90,
         function() return A.db.plate.showLevel end,
         function(v) A.db.plate.showLevel = v end)
-
     ui.CreateCheck(page, self:T("TARGET_HIGHLIGHT"), 20, -125,
         function() return A.db.plate.targetHighlight end,
         function(v) A.db.plate.targetHighlight = v end)
-
     ui.CreateCheck(page, self:T("SHOW_RESOURCE"), 20, -160,
         function() return A.db.plate.showResource end,
         function(v) A.db.plate.showResource = v end)
-
     ui.CreateCheck(page, self:T("SHOW_DEBUFFS"), 20, -195,
         function() return A.db.plate.showDebuffs end,
         function(v) A.db.plate.showDebuffs = v end)
-
     ui.CreateCheck(page, self:T("SHOW_BUFFS"), 20, -230,
         function() return A.db.plate.showBuffs end,
         function(v) A.db.plate.showBuffs = v end)
 
+    ui.CreateCheck(page, self:T("SHOW_THREAT"), 350, -90,
+        function() return A.db.plate.showThreat end,
+        function(v) A.db.plate.showThreat = v end)
+
+    local threatPosLabel = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    threatPosLabel:SetPoint("TOPLEFT", 350, -138)
+    threatPosLabel:SetText(self:T("THREAT_POSITION"))
+    ui.CreateDropdown(page, 335, -150, 190,
+        function()
+            return {
+                {value = "above", text = A:T("THREAT_ABOVE")},
+                {value = "below", text = A:T("THREAT_BELOW")},
+            }
+        end,
+        function() return A.db.plate.threatPosition end,
+        function(v) A.db.plate.threatPosition = v end)
+
+    local threatTextLabel = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    threatTextLabel:SetPoint("TOPLEFT", 350, -205)
+    threatTextLabel:SetText(self:T("THREAT_TEXT"))
+    ui.CreateDropdown(page, 335, -217, 190,
+        function()
+            return {
+                {value = "none", text = A:T("TEXT_NONE")},
+                {value = "percent", text = A:T("TEXT_PERCENT")},
+                {value = "value", text = A:T("TEXT_VALUE")},
+                {value = "both", text = A:T("TEXT_BOTH")},
+            }
+        end,
+        function() return A.db.plate.threatTextMode end,
+        function(v) A.db.plate.threatTextMode = v end)
+
     local healthModeLabel = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     healthModeLabel:SetPoint("TOPLEFT", 20, -282)
     healthModeLabel:SetText(self:T("HEALTH_TEXT"))
-
     ui.CreateDropdown(page, 5, -294, 180,
         function()
             return {
@@ -559,7 +686,6 @@ function A:BuildGeneralOptions(page, ui)
     local healthPosLabel = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     healthPosLabel:SetPoint("TOPLEFT", 20, -350)
     healthPosLabel:SetText(self:T("TEXT_POSITION"))
-
     ui.CreateDropdown(page, 5, -362, 180,
         function()
             return {
@@ -573,7 +699,6 @@ function A:BuildGeneralOptions(page, ui)
     local resourceModeLabel = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     resourceModeLabel:SetPoint("TOPLEFT", 350, -282)
     resourceModeLabel:SetText(self:T("RESOURCE_TEXT"))
-
     ui.CreateDropdown(page, 335, -294, 180,
         function()
             return {
@@ -589,7 +714,6 @@ function A:BuildGeneralOptions(page, ui)
     local resourcePosLabel = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     resourcePosLabel:SetPoint("TOPLEFT", 350, -350)
     resourcePosLabel:SetText(self:T("TEXT_POSITION"))
-
     ui.CreateDropdown(page, 335, -362, 180,
         function()
             return {
@@ -604,14 +728,16 @@ function A:BuildGeneralOptions(page, ui)
         function() return A.db.plate.width end,
         function(v) A.db.plate.width = math.floor(v + 0.5) end,
         function(v) return math.floor(v + 0.5) .. " px" end)
-
     ui.CreateSlider(page, self:T("HEIGHT"), 6, 24, 1, 365, -445,
         function() return A.db.plate.height end,
         function(v) A.db.plate.height = math.floor(v + 0.5) end,
         function(v) return math.floor(v + 0.5) .. " px" end)
-
     ui.CreateSlider(page, self:T("AURA_SIZE"), 12, 26, 1, 35, -515,
         function() return A.db.plate.auraSize end,
         function(v) A.db.plate.auraSize = math.floor(v + 0.5) end,
+        function(v) return math.floor(v + 0.5) .. " px" end)
+    ui.CreateSlider(page, self:T("THREAT_HEIGHT"), 3, 12, 1, 365, -515,
+        function() return A.db.plate.threatHeight end,
+        function(v) A.db.plate.threatHeight = math.floor(v + 0.5) end,
         function(v) return math.floor(v + 0.5) .. " px" end)
 end
