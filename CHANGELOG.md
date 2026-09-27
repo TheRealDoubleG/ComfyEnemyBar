@@ -9,6 +9,8 @@
 - Added centered or left-of-bar text placement for health and resources.
 - Added configurable aura icon size.
 - Added restoration/safety handling for recycled nameplates and protected values.
+- Fixed Background opacity so 0% fully removes the Comfy window background while the border can remain.
+- Aligned the shared Load / copy control with its profile dropdown.
 
 
 ## 0.1 Beta – 27.09.2026
