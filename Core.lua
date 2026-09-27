@@ -4,7 +4,7 @@ ComfyEnemyBar = ComfyEnemyBar or {}
 local A = ComfyEnemyBar
 
 A.name = ADDON_NAME or "ComfyEnemyBar"
-A.version = "0.3"
+A.version = "0.4"
 A.buildDate = "27.09.2026"
 A.status = "Beta"
 A.gameVersion = "WoW Forever 1.60.1"
