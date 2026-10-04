@@ -3,7 +3,7 @@
 ## Notes: Lightweight enemy nameplate information bars for WoW Forever.
 ## Notes-deDE: Leichte Gegner-Namensleisten mit kompakten Zusatzinformationen für WoW Forever.
 ## Author: TheRealDoubleG
-## Version: 0.5
+## Version: 0.6
 ## SavedVariables: ComfyEnemyBarDB
 ## X-Website: https://github.com/TheRealDoubleG/ComfyEnemyBar
 ## X-ComfySuite: true
@@ -15,3 +15,4 @@ Core.lua
 SharedSettings.lua
 EnemyBars.lua
 Options.lua
+Enhancements.lua
